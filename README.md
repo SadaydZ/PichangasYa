@@ -1,5 +1,6 @@
-**Proyecto PichangasYa Flutter-Dart
-**
+Proyecto PichangasYa Flutter-Dart
+---------------------------------
+
 Para iniciar el proyecto:
 
 1. git clone https://SadaydZ/PichangasYa para clonar el repositorio.
