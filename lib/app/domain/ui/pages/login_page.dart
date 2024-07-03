@@ -48,7 +48,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Future<void> login(String email, String contrasena) async {
-    final url = Uri.parse('http://10.0.2.2:3000/buscar-usuario');
+    final url = Uri.parse('http://localhost:3000/buscar-usuario');
     try {
       final response = await http.post(
         url,
@@ -158,7 +158,8 @@ class _LoginPageState extends State<LoginPage>
                   labelText: 'Nombre de usuario o correo electrónico',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
-                ),  validator: (value) {
+                ),
+                validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingresa tu nombre de usuario o correo electrónico';
                   }
