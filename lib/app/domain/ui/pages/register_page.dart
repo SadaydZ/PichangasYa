@@ -11,18 +11,15 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-
-
 class _RegisterPageState extends State<RegisterPage>
-  with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _textAnimation;
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  
-  // ignore: unused_field
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -49,48 +46,37 @@ class _RegisterPageState extends State<RegisterPage>
     super.dispose();
   }
 
-
-
-
-  Future<void> registerUser(String email, String contrasena,String name) async {
-    final url = Uri.parse('http://10.0.2.2:3000/user'); // Cambiar la dirección IP según sea necesario
+  // Función para registrar un nuevo usuario
+  Future<void> registerUser(
+      String email, String contrasena, String name) async {
+    final url = Uri.parse(
+        'http://localhost:3000/user'); // Cambiar la dirección IP según sea necesario
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body:json.encode({
+        body: json.encode({
           'email': email,
           'contrasena': contrasena,
           'name': name,
-
         }),
       );
 
       if (response.statusCode == 200) {
-        // Manejar la respuesta exitosa
-
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cuenta Creada')),
         );
-        // ignore: use_build_context_synchronously
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
-        
       } else {
-        // Mostrar un mensaje de error
-        // ignore: use_build_context_synchronously
-        print('Error en la respuesta del servidor: ${response.statusCode}');
+        final responseBody = json.decode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error de inicio de sesión')),
+          SnackBar(content: Text(responseBody['error'] ?? 'Error de registro')),
         );
       }
     } catch (e) {
-      // Mostrar un mensaje de error
-      // ignore: use_build_context_synchronously
-      print('Error al conectar con el servidor: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error al conectar con el servidor')),
       );
@@ -154,7 +140,7 @@ class _RegisterPageState extends State<RegisterPage>
 
   Widget _buildRegisterForm(BuildContext context) {
     return Card(
-      margin: EdgeInsets.all(10),
+      margin: const EdgeInsets.all(10),
       elevation: 50,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
@@ -165,12 +151,13 @@ class _RegisterPageState extends State<RegisterPage>
           key: _formKey,
           child: Column(
             children: [
-              SizedBox(
+              const SizedBox(
                 height: 15,
               ),
+              // Campo para el nombre de usuario
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Nombre de usuario',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
@@ -179,13 +166,19 @@ class _RegisterPageState extends State<RegisterPage>
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su nombre de usuario';
                   }
+                  // Validar que el nombre de usuario no tenga espacios ni símbolos
+                  final nameRegex = RegExp(r'^[a-zA-Z0-9]+$');
+                  if (!nameRegex.hasMatch(value)) {
+                    return 'Nombre de usuario no válido';
+                  }
                   return null;
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
+              // Campo para el correo electrónico
               TextFormField(
                 controller: _emailController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Correo electrónico',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.email),
@@ -194,54 +187,45 @@ class _RegisterPageState extends State<RegisterPage>
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su correo electrónico';
                   }
-                  // Puedes agregar validaciones adicionales de correo electrónico aquí
+                  // Validar el dominio del correo electrónico
+                  final emailRegex =
+                      RegExp(r'^[a-zA-Z0-9._%+-]+@(gmail|hotmail|yahoo)\.com$');
+                  if (!emailRegex.hasMatch(value)) {
+                    return 'Correo electrónico no válido';
+                  }
                   return null;
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
+              // Campo para la contraseña
               TextFormField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Contraseña',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.lock),
                 ),
+                obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su contraseña';
                   }
-                  // Puedes agregar validaciones adicionales de contraseña aquí
                   return null;
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
+              // Botón de registro
               ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    // Llamar a la función login con email y contraseña
-                    registerUser(_emailController.text, _passwordController.text,_nameController.text);
+                  if (_formKey.currentState?.validate() == true) {
+                    registerUser(
+                      _emailController.text,
+                      _passwordController.text,
+                      _nameController.text,
+                    );
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                child: Text(
-                  'Registrarse',
-                  style: TextStyle(fontSize: 18),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  // Lógica para manejar el inicio de sesión
-                  Navigator.pop(
-                      context); // Vuelve a la pantalla de inicio de sesión
-                },
-                child: Text('¿Ya tienes cuenta? Inicia sesión'),
+                child: const Text('Registrarse'),
               ),
             ],
           ),
