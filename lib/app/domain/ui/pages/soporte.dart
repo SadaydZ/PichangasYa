@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactInfo {
   final String phoneNumber;
@@ -16,7 +17,36 @@ final ContactInfo contactInfo = ContactInfo(
 );
 
 class SoportePage extends StatelessWidget {
-  const SoportePage({Key? key}) : super(key: key);
+  SoportePage({Key? key}) : super(key: key);
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
+
+  void _launchPhone(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    if (await canLaunch(launchUri.toString())) {
+      await launch(launchUri.toString());
+    } else {
+      throw 'Could not launch $phoneNumber';
+    }
+  }
+
+  void _launchEmail(String emailAddress) async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: emailAddress,
+    );
+    if (await canLaunch(emailUri.toString())) {
+      await launch(emailUri.toString());
+    } else {
+      throw 'Could not launch $emailAddress';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,12 +84,13 @@ class SoportePage extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.phone),
                     title: Text('Teléfono: ${contactInfo.phoneNumber}'),
+                    onTap: () => _launchPhone(contactInfo.phoneNumber),
                   ),
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.email),
-                    title:
-                        Text('Correo Electrónico: ${contactInfo.emailAddress}'),
+                    title: Text('Correo Electrónico: ${contactInfo.emailAddress}'),
+                    onTap: () => _launchEmail(contactInfo.emailAddress),
                   ),
                 ],
               ),
@@ -72,28 +103,66 @@ class SoportePage extends StatelessWidget {
             const SizedBox(height: 16),
             // Formulario para enviar problemas o preguntas
             Form(
-              // Agrega tu lógica de formulario aquí
+              key: _formKey, // Asignar clave global al formulario
               child: Column(
                 children: <Widget>[
                   TextFormField(
+                    controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Nombre'),
-                    // Agrega controlador y validaciones según tus necesidades
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingrese su nombre.';
+                      }
+                      return null;
+                    },
                   ),
                   TextFormField(
-                    decoration:
-                        const InputDecoration(labelText: 'Correo Electrónico'),
+                    controller: _emailController,
+                    decoration: const InputDecoration(labelText: 'Correo Electrónico'),
                     keyboardType: TextInputType.emailAddress,
-                    // Agrega controlador y validaciones según tus necesidades
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingrese su correo electrónico.';
+                      }
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                        return 'Por favor, ingrese un correo electrónico válido.';
+                      }
+                      return null;
+                    },
                   ),
                   TextFormField(
+                    controller: _messageController,
                     decoration: const InputDecoration(labelText: 'Mensaje'),
                     maxLines: 5,
-                    // Agrega controlador y validaciones según tus necesidades
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingrese un mensaje.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      // Lógica para enviar el formulario
+                      if (_formKey.currentState?.validate() ?? false) {
+                        // Lógica para enviar el formulario
+                        final String name = _nameController.text;
+                        final String email = _emailController.text;
+                        final String message = _messageController.text;
+
+                        final Uri emailUri = Uri(
+                          scheme: 'mailto',
+                          path: contactInfo.emailAddress,
+                          queryParameters: {
+                            'subject': 'Contacto desde la aplicación',
+                            'body': 'Nombre: $name\nCorreo: $email\n\nMensaje:\n$message',
+                          }
+                        );
+                        launch(emailUri.toString());
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Formulario enviado correctamente.')),
+                        );
+                      }
                     },
                     child: const Text('Enviar'),
                   ),
